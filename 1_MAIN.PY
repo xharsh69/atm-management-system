@@ -23,26 +23,29 @@ class Atm:
                 print("create pin")
             elif user == 2:
                 ask_pin= int(input("enter your pin"))
-                if ask_pin == enter_pin:
+                if ask_pin == self.pin:
                     self.show_balance()  
                 else:
                     print("you enter worng pin:")
             elif user == 3 :
                 ask_pin= int(input("enter your pin"))
-                if ask_pin == enter_pin:
+                if ask_pin == self.pin:
                     deposit_amount = int(input("enter your deposit amount:"))
                     self.add_balance(deposit_amount)
                 else:
                     print("you enter wrong pin:")
             elif user ==4 :
                 ask_pin= int(input("enter your pin"))
-                if ask_pin == enter_pin:
+                if ask_pin == self.pin:
                     withdrawl_amount = int(input("enter your withdrawn amount:"))
                     self.widrowal_balance(withdrawl_amount)
                 else:
                     print("you enter wrong pin:")
-            else:
-                exit
+            elif user == 5:
+                print('thanks have good day')
+                break
+            
+
         
     def create_pin(self,pin):
         self.pin = pin 
@@ -61,4 +64,5 @@ class Atm:
             print(f"₹{widrowal} withdrawn successfully.")
 
     
-user = Atm()
+sbi = Atm()
+
