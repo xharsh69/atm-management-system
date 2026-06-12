@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ATM Management System</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0B0F1A;
+      --surface: #131929;
+      --card: #1A2235;
+      --border: rgba(255,255,255,0.08);
+      --accent: #4F8EF7;
+      --green: #34D399;
+      --red: #F87171;
+      --amber: #FBBF24;
+      --text: #F0F4FF;
+      --muted: #7A88A8;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    /* ── ATM MACHINE SHELL ── */
+    .atm-shell {
+      width: 100%;
+      max-width: 420px;
+      background: #1C2033;
+      border-radius: 24px;
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 0 32px 80px rgba(0,0,0,0.6);
+      overflow: hidden;
+    }
+
+    /* Header bar */
+    .atm-header {
+      background: linear-gradient(135deg, #1a2a5e, #0f1a3d);
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .bank-name {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .bank-name span { color: var(--accent); }
+
+    .status-dot {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--green);
+    }
+
+    .status-dot::before {
+      content: '';
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse { 50% { opacity: 0.4; } }
+
+    /* Screen */
+    .atm-screen {
+      background: #0D1117;
+      margin: 1.25rem;
+      border-radius: 14px;
+      border: 1px solid rgba(79,142,247,0.2);
+      min-height: 240px;
+      padding: 1.25rem;
+      font-family: 'Courier New', monospace;
+      font-size: 13.5px;
+      line-height: 1.9;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .screen-glow {
+      position: absolute;
+      top: -40px; left: 50%;
+      transform: translateX(-50%);
+      width: 200px; height: 80px;
+      background: radial-gradient(ellipse, rgba(79,142,247,0.08), transparent 70%);
+      pointer-events: none;
+    }
+
+    .screen-line { display: block; }
+    .screen-line.dim { color: #3A4A6A; }
+    .screen-line.accent { color: var(--accent); }
+    .screen-line.green { color: var(--green); }
+    .screen-line.red { color: var(--red); }
+    .screen-line.amber { color: var(--amber); }
+    .screen-line.white { color: var(--text); }
+
+    .cursor {
+      display: inline-block;
+      width: 8px; height: 14px;
+      background: var(--accent);
+      vertical-align: middle;
+      margin-left: 2px;
+      animation: blink 1s step-start infinite;
+    }
+
+    @keyframes blink { 50% { opacity: 0; } }
+
+    /* Balance display */
+    .balance-display {
+      background: rgba(79,142,247,0.07);
+      border: 1px solid rgba(79,142,247,0.15);
+      border-radius: 10px;
+      padding: 0.75rem 1rem;
+      margin: 0.5rem 0;
+      display: none;
+    }
+
+    .balance-display.show { display: block; }
+
+    .balance-label {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 4px;
+    }
+
+    .balance-amount {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--green);
+    }
+
+    /* Input area */
+    .input-area {
+      padding: 0 1.25rem 1rem;
+    }
+
+    .input-label {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .atm-input {
+      flex: 1;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      color: var(--text);
+      font-size: 15px;
+      font-family: 'Courier New', monospace;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .atm-input:focus { border-color: var(--accent); }
+    .atm-input::placeholder { color: #3A4A6A; }
+
+    .atm-input[type="password"] { letter-spacing: 0.2em; }
+
+    /* Keypad */
+    .keypad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      padding: 0 1.25rem 1.25rem;
+    }
+
+    .key {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 8px;
+      color: var(--text);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s, border-color 0.15s;
+      font-family: 'Inter', sans-serif;
+      text-align: center;
+    }
+
+    .key:hover { background: #222d45; border-color: rgba(255,255,255,0.15); }
+    .key:active { transform: scale(0.96); }
+
+    .key.action { 
+      background: rgba(79,142,247,0.12); 
+      border-color: rgba(79,142,247,0.25);
+      color: var(--accent);
+    }
+
+    .key.action:hover { background: rgba(79,142,247,0.22); }
+
+    .key.danger { 
+      background: rgba(248,113,113,0.1); 
+      border-color: rgba(248,113,113,0.2);
+      color: var(--red);
+    }
+
+    .key.danger:hover { background: rgba(248,113,113,0.18); }
+
+    .key.confirm { 
+      background: rgba(52,211,153,0.1); 
+      border-color: rgba(52,211,153,0.2);
+      color: var(--green);
+    }
+
+    .key.confirm:hover { background: rgba(52,211,153,0.18); }
+
+    .key.wide {
+      grid-column: span 2;
+    }
+
+    .key.full {
+      grid-column: span 3;
+    }
+
+    /* Menu buttons */
+    .menu-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding: 0 1.25rem 1.25rem;
+    }
+
+    .menu-btn {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 12px;
+      color: var(--text);
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.15s, transform 0.1s;
+      text-align: left;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .menu-btn:hover { border-color: rgba(79,142,247,0.4); background: #202840; }
+    .menu-btn:active { transform: scale(0.98); }
+
+    .menu-btn .mb-num {
+      font-size: 11px;
+      color: var(--accent);
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .menu-btn .mb-label {
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .menu-btn .mb-icon {
+      font-size: 18px;
+      margin-bottom: 6px;
+    }
+
+    .menu-btn.exit-btn {
+      grid-column: span 2;
+      background: rgba(248,113,113,0.06);
+      border-color: rgba(248,113,113,0.15);
+      color: var(--red);
+      text-align: center;
+      padding: 10px;
+    }
+
+    .menu-btn.exit-btn:hover { background: rgba(248,113,113,0.12); }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 20px;
+      font-size: 14px;
+      font-weight: 500;
+      transition: transform 0.3s ease;
+      z-index: 999;
+      white-space: nowrap;
+    }
+
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.success { border-color: rgba(52,211,153,0.4); color: var(--green); }
+    .toast.error { border-color: rgba(248,113,113,0.4); color: var(--red); }
+
+    /* hidden */
+    .hidden { display: none !important; }
+
+    /* Footer */
+    .atm-footer {
+      background: rgba(0,0,0,0.2);
+      padding: 10px 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid var(--border);
+    }
+
+    .atm-footer span { font-size: 11px; color: #3A4A6A; }
+  </style>
+</head>
+<body>
+
+<div class="atm-shell">
+
+  <!-- Header -->
+  <div class="atm-header">
+    <div class="bank-name">ATM <span>System</span></div>
+    <div class="status-dot">Online</div>
+  </div>
+
+  <!-- Screen -->
+  <div class="atm-screen" id="screen">
+    <div class="screen-glow"></div>
+    <span class="screen-line dim">================================</span>
+    <span class="screen-line white" id="screen-title">  Welcome to ATM System</span>
+    <span class="screen-line dim">================================</span>
+    <span class="screen-line" id="screen-msg1"></span>
+    <span class="screen-line" id="screen-msg2"></span>
+    <span class="screen-line" id="screen-msg3"></span>
+    <div class="balance-display" id="balance-display">
+      <div class="balance-label">Current Balance</div>
+      <div class="balance-amount" id="balance-amount">₹0</div>
+    </div>
+  </div>
+
+  <!-- Input area (hidden until needed) -->
+  <div class="input-area hidden" id="input-area">
+    <div class="input-label" id="input-label">Enter amount</div>
+    <div class="input-row">
+      <input class="atm-input" id="main-input" type="text" placeholder="0" autocomplete="off"/>
+    </div>
+  </div>
+
+  <!-- MAIN MENU -->
+  <div id="panel-menu">
+    <div class="menu-grid">
+      <button class="menu-btn" onclick="goCreatePin()">
+        <div class="mb-icon">🔐</div>
+        <div class="mb-num">1</div>
+        <div class="mb-label">Create PIN</div>
+      </button>
+      <button class="menu-btn" onclick="goCheckBalance()">
+        <div class="mb-icon">💰</div>
+        <div class="mb-num">2</div>
+        <div class="mb-label">Check Balance</div>
+      </button>
+      <button class="menu-btn" onclick="goDeposit()">
+        <div class="mb-icon">📥</div>
+        <div class="mb-num">3</div>
+        <div class="mb-label">Deposit</div>
+      </button>
+      <button class="menu-btn" onclick="goWithdraw()">
+        <div class="mb-icon">📤</div>
+        <div class="mb-num">4</div>
+        <div class="mb-label">Withdraw</div>
+      </button>
+      <button class="menu-btn exit-btn" onclick="goExit()">
+        <div class="mb-label">⏻ &nbsp;Exit</div>
+      </button>
+    </div>
+  </div>
+
+  <!-- PIN KEYPAD (shared for create/verify) -->
+  <div id="panel-pin" class="hidden">
+    <div class="keypad">
+      <button class="key" onclick="pinKey('1')">1</button>
+      <button class="key" onclick="pinKey('2')">2</button>
+      <button class="key" onclick="pinKey('3')">3</button>
+      <button class="key" onclick="pinKey('4')">4</button>
+      <button class="key" onclick="pinKey('5')">5</button>
+      <button class="key" onclick="pinKey('6')">6</button>
+      <button class="key" onclick="pinKey('7')">7</button>
+      <button class="key" onclick="pinKey('8')">8</button>
+      <button class="key" onclick="pinKey('9')">9</button>
+      <button class="key danger" onclick="pinClear()">CLR</button>
+      <button class="key" onclick="pinKey('0')">0</button>
+      <button class="key confirm" onclick="pinConfirm()">OK</button>
+    </div>
+  </div>
+
+  <!-- AMOUNT KEYPAD -->
+  <div id="panel-amount" class="hidden">
+    <div class="keypad">
+      <button class="key" onclick="amtKey('1')">1</button>
+      <button class="key" onclick="amtKey('2')">2</button>
+      <button class="key" onclick="amtKey('3')">3</button>
+      <button class="key" onclick="amtKey('4')">4</button>
+      <button class="key" onclick="amtKey('5')">5</button>
+      <button class="key" onclick="amtKey('6')">6</button>
+      <button class="key" onclick="amtKey('7')">7</button>
+      <button class="key" onclick="amtKey('8')">8</button>
+      <button class="key" onclick="amtKey('9')">9</button>
+      <button class="key danger" onclick="amtClear()">CLR</button>
+      <button class="key" onclick="amtKey('0')">0</button>
+      <button class="key confirm" onclick="amtConfirm()">OK</button>
+      <button class="key action full" onclick="backToMenu()">← Back to Menu</button>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="atm-footer">
+    <span>Python ATM · JS Port</span>
+    <span id="footer-time"></span>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // ── STATE (mirrors Python class) ──
+  let pin = "";
+  let balance = 0;
+
+  // ── PIN flow state ──
+  let pinMode = "";   // "create" | "verify-balance" | "verify-deposit" | "verify-withdraw"
+  let pinBuffer = "";
+  let pendingAmount = 0;
+
+  // ── SCREEN HELPERS ──
+  function setScreen(title, m1 = "", m2 = "", m3 = "", cls1 = "", cls2 = "", cls3 = "") {
+    document.getElementById("screen-title").textContent = "  " + title;
+    const l1 = document.getElementById("screen-msg1");
+    const l2 = document.getElementById("screen-msg2");
+    const l3 = document.getElementById("screen-msg3");
+    l1.textContent = m1 ? "  " + m1 : "";
+    l2.textContent = m2 ? "  " + m2 : "";
+    l3.textContent = m3 ? "  " + m3 : "";
+    l1.className = "screen-line " + cls1;
+    l2.className = "screen-line " + cls2;
+    l3.className = "screen-line " + cls3;
+    document.getElementById("balance-display").classList.remove("show");
+  }
+
+  function showBalance() {
+    document.getElementById("balance-amount").textContent = "₹" + balance.toLocaleString("en-IN");
+    document.getElementById("balance-display").classList.add("show");
+  }
+
+  function showPanel(name) {
+    ["panel-menu","panel-pin","panel-amount"].forEach(p =>
+      document.getElementById(p).classList.add("hidden")
+    );
+    document.getElementById("panel-" + name).classList.remove("hidden");
+  }
+
+  function showInput(show, label = "") {
+    const area = document.getElementById("input-area");
+    if (show) {
+      area.classList.remove("hidden");
+      document.getElementById("input-label").textContent = label;
+      document.getElementById("main-input").value = "";
+    } else {
+      area.classList.add("hidden");
+    }
+  }
+
+  function toast(msg, type = "success") {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.className = "toast show " + type;
+    setTimeout(() => t.classList.remove("show"), 2800);
+  }
+
+  // ── MENU ACTIONS ──
+  function goCreatePin() {
+    pinMode = "create";
+    pinBuffer = "";
+    setScreen("Create PIN", "Enter your new PIN:", "", "", "accent");
+    document.getElementById("main-input").setAttribute("type","password");
+    showInput(true, "Your PIN (use keypad below)");
+    document.getElementById("main-input").value = "";
+    showPanel("pin");
+  }
+
+  function goCheckBalance() {
+    if (!pin) {
+      setScreen("Error", "No PIN set.", "Please create a PIN first.", "", "red", "muted");
+      toast("❌ Create a PIN first", "error");
+      return;
+    }
+    pinMode = "verify-balance";
+    pinBuffer = "";
+    setScreen("Verify Identity", "Enter your PIN to continue:", "", "", "accent");
+    showInput(true, "Enter PIN");
+    document.getElementById("main-input").setAttribute("type","password");
+    document.getElementById("main-input").value = "";
+    showPanel("pin");
+  }
+
+  function goDeposit() {
+    if (!pin) {
+      setScreen("Error", "No PIN set.", "Please create a PIN first.", "", "red", "muted");
+      toast("❌ Create a PIN first", "error");
+      return;
+    }
+    pinMode = "verify-deposit";
+    pinBuffer = "";
+    setScreen("Verify Identity", "Enter your PIN to continue:", "", "", "accent");
+    showInput(true, "Enter PIN");
+    document.getElementById("main-input").setAttribute("type","password");
+    document.getElementById("main-input").value = "";
+    showPanel("pin");
+  }
+
+  function goWithdraw() {
+    if (!pin) {
+      setScreen("Error", "No PIN set.", "Please create a PIN first.", "", "red", "muted");
+      toast("❌ Create a PIN first", "error");
+      return;
+    }
+    pinMode = "verify-withdraw";
+    pinBuffer = "";
+    setScreen("Verify Identity", "Enter your PIN to continue:", "", "", "accent");
+    showInput(true, "Enter PIN");
+    document.getElementById("main-input").setAttribute("type","password");
+    document.getElementById("main-input").value = "";
+    showPanel("pin");
+  }
+
+  function goExit() {
+    setScreen("Goodbye!", "Thank you for using ATM System.", "Session ended.", "", "green", "muted");
+    showInput(false);
+    showPanel("menu");
+    document.querySelectorAll(".menu-btn").forEach(b => b.disabled = true);
+    toast("Session ended. Refresh to restart.");
+  }
+
+  // ── PIN KEYPAD ──
+  function pinKey(k) {
+    if (pinBuffer.length >= 6) return;
+    pinBuffer += k;
+    document.getElementById("main-input").value = "●".repeat(pinBuffer.length);
+  }
+
+  function pinClear() {
+    pinBuffer = "";
+    document.getElementById("main-input").value = "";
+  }
+
+  function pinConfirm() {
+    if (!pinBuffer) { toast("Enter a PIN first", "error"); return; }
+
+    if (pinMode === "create") {
+      pin = pinBuffer;
+      setScreen("PIN Created!", "Your PIN has been set.", "You can now use all features.", "", "green", "muted");
+      showInput(false);
+      showPanel("menu");
+      toast("✅ PIN created successfully");
+    } else {
+      // verify
+      if (pinBuffer !== pin) {
+        setScreen("Wrong PIN", "Incorrect PIN entered.", "Please try again.", "", "red", "muted");
+        pinBuffer = "";
+        document.getElementById("main-input").value = "";
+        toast("❌ Incorrect PIN", "error");
+        setTimeout(backToMenu, 1500);
+        return;
+      }
+      // verified
+      if (pinMode === "verify-balance") {
+        setScreen("Account Balance", "Balance fetched successfully.", "", "", "green");
+        showBalance();
+        showInput(false);
+        showPanel("menu");
+        toast("✅ Balance checked");
+      } else if (pinMode === "verify-deposit") {
+        setScreen("Deposit Funds", "Enter amount to deposit:", "", "", "accent");
+        showInput(true, "Deposit amount (₹)");
+        document.getElementById("main-input").setAttribute("type","number");
+        document.getElementById("main-input").value = "";
+        document.getElementById("main-input").placeholder = "e.g. 500";
+        showPanel("amount");
+      } else if (pinMode === "verify-withdraw") {
+        setScreen("Withdraw Funds", "Enter amount to withdraw:", "", "", "accent");
+        showInput(true, "Withdraw amount (₹)");
+        document.getElementById("main-input").setAttribute("type","number");
+        document.getElementById("main-input").value = "";
+        document.getElementById("main-input").placeholder = "e.g. 200";
+        showPanel("amount");
+      }
+    }
+  }
+
+  // ── AMOUNT KEYPAD ──
+  let amtBuffer = "";
+
+  function amtKey(k) {
+    amtBuffer += k;
+    document.getElementById("main-input").value = amtBuffer;
+  }
+
+  function amtClear() {
+    amtBuffer = "";
+    document.getElementById("main-input").value = "";
+  }
+
+  function amtConfirm() {
+    const raw = document.getElementById("main-input").value;
+    const amount = parseInt(raw);
+    amtBuffer = "";
+
+    if (!raw || isNaN(amount) || amount <= 0) {
+      toast("❌ Enter a valid amount", "error");
+      return;
+    }
+
+    if (pinMode === "verify-deposit") {
+      balance += amount;
+      setScreen("Deposit Successful", "₹" + amount.toLocaleString("en-IN") + " deposited.", "New balance: ₹" + balance.toLocaleString("en-IN"), "", "green", "muted");
+      showInput(false);
+      showPanel("menu");
+      toast("✅ ₹" + amount.toLocaleString("en-IN") + " deposited");
+
+    } else if (pinMode === "verify-withdraw") {
+      if (amount > balance) {
+        setScreen("Insufficient Balance", "Requested: ₹" + amount.toLocaleString("en-IN"), "Available: ₹" + balance.toLocaleString("en-IN"), "", "red", "amber");
+        showInput(false);
+        showPanel("menu");
+        toast("❌ Insufficient balance", "error");
+      } else {
+        balance -= amount;
+        setScreen("Withdrawal Successful", "₹" + amount.toLocaleString("en-IN") + " withdrawn.", "Remaining: ₹" + balance.toLocaleString("en-IN"), "", "green", "muted");
+        showInput(false);
+        showPanel("menu");
+        toast("✅ ₹" + amount.toLocaleString("en-IN") + " withdrawn");
+      }
+    }
+  }
+
+  function backToMenu() {
+    amtBuffer = "";
+    pinBuffer = "";
+    showInput(false);
+    setScreen("Welcome to ATM System");
+    showPanel("menu");
+  }
+
+  // ── FOOTER CLOCK ──
+  function updateClock() {
+    const now = new Date();
+    document.getElementById("footer-time").textContent =
+      now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  // init screen
+  setScreen("Welcome to ATM System", "Select an option below.", "", "", "muted");
+</script>
+</body>
+</html>
