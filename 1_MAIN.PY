@@ -2,10 +2,15 @@
 
 class Atm:
     
+    __counter = 0
+
     def __init__(self):
         self.__pin = ""
         self.__balance= 0
+        self.sno = Atm.__counter
+        Atm.__counter = Atm.__counter+1
         self.__menu()
+        
 
     def __menu(self):
         while True:
@@ -44,11 +49,21 @@ class Atm:
             elif user == 5:
                 print('thanks have good day')
                 break
-            
+    
+    @staticmethod
+    def get_counter():
+        return Atm.__counter
+    @staticmethod
+    def set_counter(new:int):
+        if type(new)== int:
+            Atm.__counter= new
+        else:
+            print("not allowed:")
+    
     def get__pin(self):
         return self.__pin
 
-    def set__pin(self,new_pin):
+    def set__pin(self,new_pin:str):
         if len(str(new_pin))== 4:
             self.__pin = new_pin
         else:
@@ -72,9 +87,10 @@ class Atm:
             print(f"₹{widrowal} withdrawn successfully.")
 
     
-sbi = Atm()
+Sbi = Atm()
+Hdfc= Atm()
+Bob=Atm()
 
 
-print(sbi.get__pin())
-sbi.set__pin("0000")
-print(sbi.get__pin())
+
+Atm.set_counter(0)
