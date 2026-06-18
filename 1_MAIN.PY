@@ -47,7 +47,7 @@ class Atm:
                 else:
                     print("you enter wrong pin:")
             elif user == 5:
-                print('thanks have good day')
+                print('thanks: have good day')
                 break
     
     @staticmethod
@@ -64,7 +64,7 @@ class Atm:
         return self.__pin
 
     def set__pin(self,new_pin:str):
-        if len(str(new_pin))== 4:
+        if len(str(new_pin)) == 4:
             self.__pin = new_pin
         else:
             print("PIN must be 4 digits")
